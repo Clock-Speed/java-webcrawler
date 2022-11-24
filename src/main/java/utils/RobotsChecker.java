@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,16 +60,9 @@ public class RobotsChecker {
      * Try to create new URL object from the host url concatenated with "/robots.txt".
      * Should always succeed as the host url should already be a valid url.
      */
-    URL robotsUrl;
-    try {
-      robotsUrl = new URL(hostUrlString + "/robots.txt");
-    } catch (MalformedURLException e) {
-      throw new RuntimeException(
-          "UNREACHABLE: appending \"/robots.txt\" to a valid url resulted in invalid url"
-      );
-    }
 
     try {
+      URL robotsUrl = new URL(hostUrlString + "/robots.txt");
       HttpURLConnection connection = (HttpURLConnection) robotsUrl.openConnection();
 
       int responseCode = connection.getResponseCode();
@@ -85,10 +79,10 @@ public class RobotsChecker {
             "text/plain",
             userAgent
         );
-      /* If not successful due to redirection or client error assume no crawl restrictions. */
-      } else if (responseCode >= 300 && responseCode < 500) {
+        /* If not successful due to client error assume no crawl restrictions. */
+      } else if (responseCode >= 400 && responseCode < 500) {
         rules = new SimpleRobotRules(SimpleRobotRules.RobotRulesMode.ALLOW_ALL);
-      /* If not successful due to any other error assume not able to crawl entire domain. */
+        /* If not successful due to any other error assume not able to crawl entire domain. */
       } else {
         rules = new SimpleRobotRules(SimpleRobotRules.RobotRulesMode.ALLOW_NONE);
       }
@@ -96,6 +90,25 @@ public class RobotsChecker {
       /* Add rule to the cache. */
       hostToRules.put(hostUrlString, rules);
       /* Return whether given url can be crawled under the rules.*/
+      return rules.isAllowed(url.toString());
+
+      /*
+       * Try to create new URL object from the host url concatenated with "/robots.txt".
+       * Should always succeed as the host url should already be a valid url.
+       */
+    } catch (MalformedURLException e) {
+      throw new RuntimeException(
+          "UNREACHABLE: appending \"/robots.txt\" to a valid url resulted in invalid url"
+      );
+
+      /*Special case when URL not using HTTP. Cannot crawl non http urls. */
+    } catch (ClassCastException e) {
+      return false;
+
+      /* Special case when IP address of URL cannot be determined. */
+    } catch (UnknownHostException e) {
+      rules = new SimpleRobotRules(SimpleRobotRules.RobotRulesMode.ALLOW_NONE);
+      hostToRules.put(hostUrlString, rules);
       return rules.isAllowed(url.toString());
 
     } catch (IOException e) {
