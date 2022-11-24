@@ -11,7 +11,13 @@ repositories {
 
 dependencies {
     implementation 'org.jsoup:jsoup:1.15.3'
+
     implementation group: 'com.github.crawler-commons', name: 'crawler-commons', version: '1.2'
+    constraints {
+        implementation('commons-io:commons-io:2.11.0') {
+            because 'previous versions have a bug impacting this application'
+        }}
+
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
