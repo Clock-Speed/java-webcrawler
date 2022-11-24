@@ -47,6 +47,9 @@ public class SimpleCrawler {
 
     while (!processQueue.isEmpty() && urls.size() < limit) {
       String urlToProcessString = processQueue.poll();
+      if (urls.contains(urlToProcessString)) {
+        continue;
+      }
       URL urlToProcess;
       try {
         urlToProcess = new URL(urlToProcessString);
