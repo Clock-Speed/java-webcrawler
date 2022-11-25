@@ -5,29 +5,33 @@ import utils.Scraper;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * A simple crawler which crawls webpages sequentially.
  */
-public class SimpleCrawler {
+public class SimpleCrawler implements Crawler {
   /**
    * Limit for the number of URL to find.
    */
-  private final long limit;
+  private final int limit;
 
   /**
    * The RobotChecker for this crawler.
    */
-  private final RobotsChecker robotsChecker = new RobotsChecker("SimpleCrawler");
+  private final RobotsChecker robotsChecker;
 
   /**
    * Constructs a SimpleCrawler.
    *
    * @param limit The number of URLs to find.
    */
-  public SimpleCrawler(long limit) {
+  public SimpleCrawler(int limit, String name) {
     this.limit = limit;
+    this.robotsChecker = new RobotsChecker(name);
   }
 
   /**
@@ -45,11 +49,16 @@ public class SimpleCrawler {
     Queue<String> processQueue = new LinkedList<>();
     processQueue.add(baseUrl);
 
+    /* Crawl urls in the processQueue until the limit is reached */
     while (!processQueue.isEmpty() && urls.size() < limit) {
       String urlToProcessString = processQueue.poll();
+
+      /* If url already crawled, continue. */
       if (urls.contains(urlToProcessString)) {
         continue;
       }
+
+      /* If url is malformed do not process further. */
       URL urlToProcess;
       try {
         urlToProcess = new URL(urlToProcessString);

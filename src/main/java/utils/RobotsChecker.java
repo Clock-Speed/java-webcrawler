@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -101,18 +100,15 @@ public class RobotsChecker {
           "UNREACHABLE: appending \"/robots.txt\" to a valid url resulted in invalid url"
       );
 
-      /*Special case when URL not using HTTP. Cannot crawl non http urls. */
+      /* Special case when URL not using HTTP. Cannot crawl non http urls. */
     } catch (ClassCastException e) {
       return false;
 
-      /* Special case when IP address of URL cannot be determined. */
-    } catch (UnknownHostException e) {
+      /* For all IO exceptions assume webpage cannot be crawled. */
+    } catch (IOException e) {
       rules = new SimpleRobotRules(SimpleRobotRules.RobotRulesMode.ALLOW_NONE);
       hostToRules.put(hostUrlString, rules);
       return rules.isAllowed(url.toString());
-
-    } catch (IOException e) {
-      throw new RuntimeException("Could not connect to URL.", e);
     }
   }
 }
